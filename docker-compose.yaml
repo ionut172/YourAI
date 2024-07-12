@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  web:
+    build: ./laravel
+    ports:
+      - "8000:8000" # Map the artisan serve port to the host
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: pusher
+      DB_USERNAME: user
+      DB_PASSWORD: password
+    command: php artisan serve --host=0.0.0.0 --port=8000
+    depends_on:
+      - mysql
+    networks:
+      - mynetwork
+
+  mysql:
+    image: mysql:5.7
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: Plesescu1!
+      MYSQL_DATABASE: pusher
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - mynetwork
+
+  app:
+    build: ./yolov5
+    expose:
+      - "8001"
+    volumes:
+      - ./yolov5:/app
+    environment:
+      - DEBIAN_FRONTEND=noninteractive
+    command: python3 app.py
+    networks:
+      - mynetwork
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/default.conf.template:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - web
+      - app
+    networks:
+      - mynetwork
+
+
+volumes:
+  mysql-data:
+
+networks:
+  mynetwork:
